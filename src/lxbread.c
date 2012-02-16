@@ -93,12 +93,12 @@ int parse_header(const char *data, long size, fcs_header *hdr)
     if (!hdr) return FALSE;
 
     if (size < 58) {
-        fprintf(stderr, "Bad LXB: header data is too small (%lu)\n", size);
+        fprintf(stderr, "  Bad LXB: header data is too small (%lu)\n", size);
         return FALSE;
     }
 
     if (0 != strncmp(data, "FCS3.0    ", 10)) {
-        fprintf(stderr, "Bad LXB: magic bytes do not match\n");
+        fprintf(stderr, "  Bad LXB: magic bytes do not match\n");
         return FALSE;
     }
 
@@ -111,7 +111,7 @@ int parse_header(const char *data, long size, fcs_header *hdr)
     ok &= sscanf(&data[50], "%8d", &hdr->end_analysis);
 
     if (!ok)
-        fprintf(stderr, "Bad LXB: failed to parse segment offsets\n");
+        fprintf(stderr, "  Bad LXB: failed to parse segment offsets\n");
 
     return ok;
 }
@@ -145,25 +145,25 @@ int check_par_format(map_t txt)
 {
     int npar = map_get_int(txt, "$PAR");
     if (npar > MAX_PAR) {
-        fprintf(stderr, "Too many parameters: %d\n", npar);
+        fprintf(stderr, "  Too many parameters: %d\n", npar);
         return FALSE;
     }
 
     const char *data_type = map_get(txt, "$DATATYPE");
     if (strcasecmp("I", data_type) != 0) {
-        fprintf(stderr, "Data is not integral ($DATATYPE=%s)\n", data_type);
+        fprintf(stderr, "  Data is not integral ($DATATYPE=%s)\n", data_type);
         return FALSE;
     }
 
     const char *mode = map_get(txt, "$MODE");
     if (strcasecmp("L", mode) != 0) {
-        fprintf(stderr, "Data not in list format ($MODE=%s)\n", mode);
+        fprintf(stderr, "  Data not in list format ($MODE=%s)\n", mode);
         return FALSE;
     }
 
     const char *byteord = map_get(txt, "$BYTEORD");
     if (strcmp("1,2,3,4", byteord) != 0) {
-        fprintf(stderr, "Data not in little endian format ($BYTEORD=%s)\n",
+        fprintf(stderr, "  Data not in little endian format ($BYTEORD=%s)\n",
                 byteord);
         return FALSE;
     }
@@ -174,7 +174,7 @@ int check_par_format(map_t txt)
         const char *key = parameter_key(i, 'B');
         int bits = map_get_int(txt, key);
         if (bits != 32) {
-            fprintf(stderr, "Parameter %d is not 32 bits (%s=%d)\n",
+            fprintf(stderr, "  Parameter %d is not 32 bits (%s=%d)\n",
                     i, key, bits);
             return FALSE;
         }
@@ -214,44 +214,53 @@ void print_data(const int32_t *data, long size, map_t txt)
 
 int main(int argc, char *argv[])
 {
-    if (argc != 2) {
-        fprintf(stderr, "usage: lxbread LXBFILE\n");
+    if (argc < 2) {
+        fprintf(stderr, "usage: lxbread file1 [file2 ..]\n");
         return -1;
     }
 
-    long size;
-    char *buf = read_file(argv[1], &size);
-    if (!buf) {
-        fprintf(stderr, "Could not read file: %s\n", argv[1]);
-        return -1;
+    int did_header = FALSE;
+    for (int i = 1; i < argc; ++i) {
+        fprintf(stderr, "Processing file [%d of %d]: %s\n",
+                i, argc-1, argv[i]);
+
+        long size;
+        char *buf = read_file(argv[i], &size);
+        if (!buf) {
+            fprintf(stderr, "  Could not read file: %s\n", argv[i]);
+            continue;
+        }
+
+        fcs_header hdr;
+        int ok = parse_header(buf, size, &hdr);
+        if (!ok) continue;
+
+        long txt_size = hdr.end_text - hdr.begin_text;
+        if (!(txt_size > 0 && hdr.begin_text > 0 && hdr.end_text <= size)) {
+            fprintf(stderr, "  Bad LXB: could not locate TEXT segment\n");
+            continue;
+        }
+
+        map_t txt = parse_text(buf + hdr.begin_text, txt_size);
+
+        if (!check_par_format(txt))
+            continue;
+
+        if (!did_header) {
+            print_header(txt);
+            did_header = TRUE;
+        }
+
+        long data_size = hdr.end_data - hdr.begin_data;
+        if (!(data_size > 0 && hdr.begin_data > 0 && hdr.end_data <= size)) {
+            fprintf(stderr, "  Bad LXB: could not locate DATA segment\n");
+            continue;
+        }
+
+        print_data((int32_t*)(buf + hdr.begin_data), data_size, txt);
+
+        map_free(txt);
     }
 
-    fcs_header hdr;
-    int ok = parse_header(buf, size, &hdr);
-    if (!ok) return -1;
-
-    long txt_size = hdr.end_text - hdr.begin_text;
-    if (!(txt_size > 0 && hdr.begin_text > 0 && hdr.end_text <= size)) {
-        fprintf(stderr, "Bad LXB: could not locate TEXT segment\n");
-        return -1;
-    }
-
-    map_t txt = parse_text(buf + hdr.begin_text, txt_size);
-
-    if (!check_par_format(txt))
-        return -1;
-
-    print_header(txt);
-
-    long data_size = hdr.end_data - hdr.begin_data;
-    if (!(data_size > 0 && hdr.begin_data > 0 && hdr.end_data <= size)) {
-        fprintf(stderr, "Bad LXB: could not locate DATA segment\n");
-        return -1;
-    }
-
-    print_data((int32_t*)(buf + hdr.begin_data), data_size, txt);
-
-    map_free(txt);
-
-    return 0;
+    return did_header ? 0 : -1;
 }
