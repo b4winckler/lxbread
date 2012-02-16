@@ -279,8 +279,10 @@ int main(int argc, char *argv[])
 
         map_t txt = parse_text(buf + hdr.begin_text, txt_size);
 
-        if (!check_par_format(txt))
+        if (!check_par_format(txt)) {
+            map_free(txt);
             continue;
+        }
 
         if (!did_header) {
             print_header(txt);
@@ -290,6 +292,7 @@ int main(int argc, char *argv[])
         long data_size = hdr.end_data - hdr.begin_data;
         if (!(data_size > 0 && hdr.begin_data > 0 && hdr.end_data <= size)) {
             fprintf(stderr, "  Bad LXB: could not locate DATA segment\n");
+            map_free(txt);
             continue;
         }
 
