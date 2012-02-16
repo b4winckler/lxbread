@@ -206,7 +206,10 @@ void print_data(const int32_t *data, long size, map_t txt)
 
 int main(int argc, char *argv[])
 {
-    assert(argc == 2);
+    if (argc != 2) {
+        fprintf(stderr, "usage: lxbread LXBFILE\n");
+        return -1;
+    }
 
     long size;
     char *buf = read_file(argv[1], &size);
