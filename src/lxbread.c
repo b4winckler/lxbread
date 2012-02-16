@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 {
     if (argc < 2) {
         fprintf(stderr, "usage: lxbread file1 [file2 ..]\n");
-        return -1;
+        exit(EXIT_FAILURE);
     }
 
     int did_header = FALSE;
@@ -262,5 +262,5 @@ int main(int argc, char *argv[])
         map_free(txt);
     }
 
-    return did_header ? 0 : -1;
+    return did_header ? EXIT_SUCCESS : EXIT_FAILURE;
 }
