@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-
+#include <getopt.h>
 #include "map_lib.h"
 
 
@@ -21,6 +21,14 @@ typedef struct {
     int begin_data, end_data;
     int begin_analysis, end_analysis;
 } fcs_header;
+
+static int verbose = TRUE;
+
+static struct option longopts[] = {
+    { "silent" , no_argument       , &verbose , FALSE } ,
+    { "help"   , no_argument       , NULL     , 'h' }   ,
+    { NULL     , 0                 , NULL     , 0 }
+};
 
 static int par_mask[MAX_PAR];
 
@@ -191,7 +199,7 @@ void print_header(map_t txt)
     for (int i = 0; i < npar; ++i) {
         const char *label = map_get(txt, parameter_key(i, 'S'));
         const char *size = map_get(txt, parameter_key(i, 'R'));
-        printf("%s(%s)%s", label, size, i==npar-1 ? "\n" : ", ");
+        printf("%s (%s)%s", label, size, i==npar-1 ? "\n" : ", ");
     }
 }
 
@@ -212,17 +220,45 @@ void print_data(const int32_t *data, long size, map_t txt)
     }
 }
 
+void usage()
+{
+    fprintf(stderr,
+"usage: lxbread [--silent] [--help|-h] file1 [file2 ..]\n"
+"\n"
+"Reads one or more LXB (Luminex bead array) files and prints a column for\n"
+"each parameter.  The first row is a comma separated list of parameter\n"
+"names and the maximum value each parameter can assume in parenthesis.\n"
+    );
+    exit(EXIT_SUCCESS);
+}
+
 int main(int argc, char *argv[])
 {
-    if (argc < 2) {
-        fprintf(stderr, "usage: lxbread file1 [file2 ..]\n");
-        exit(EXIT_FAILURE);
+    int n;
+    while ((n = getopt_long(argc, argv, "h", longopts, NULL)) != -1) {
+        switch (n) {
+        case 0:
+            // long option - nothing to do
+            break;
+        case 'h':
+            // help - fall through
+        default:
+            usage();
+            break;
+        }
     }
 
+    argc -= optind;
+    argv += optind;
+
+    if (argc < 1)
+        usage();
+
     int did_header = FALSE;
-    for (int i = 1; i < argc; ++i) {
-        fprintf(stderr, "Processing file [%d of %d]: %s\n",
-                i, argc-1, argv[i]);
+    for (int i = 0; i < argc; ++i) {
+        if (verbose)
+            fprintf(stderr, "Processing file [%d of %d]: %s\n",
+                    i+1, argc, argv[i]);
 
         long size;
         char *buf = read_file(argv[i], &size);
