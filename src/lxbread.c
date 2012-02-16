@@ -254,11 +254,16 @@ int main(int argc, char *argv[])
     if (argc < 1)
         usage();
 
+    char processing_fmt[] = "Processing file [%1d of %d]: %s\n";
+    if (argc >= 1000)     processing_fmt[18] = '4';
+    else if (argc >= 100) processing_fmt[18] = '3';
+    else if (argc >= 10)  processing_fmt[18] = '2';
+    else                  processing_fmt[18] = '1';
+
     int did_header = FALSE;
     for (int i = 0; i < argc; ++i) {
         if (verbose)
-            fprintf(stderr, "Processing file [%d of %d]: %s\n",
-                    i+1, argc, argv[i]);
+            fprintf(stderr, processing_fmt, i+1, argc, argv[i]);
 
         long size;
         char *buf = read_file(argv[i], &size);
