@@ -36,11 +36,10 @@ struct map_s;
 typedef struct map_s *map_t;
 
 
-map_t map_create();
-void map_free(map_t m);
-void map_set(map_t m, char *key, char *value);
+map_t       map_create();
+void        map_free(map_t m);
+void        map_set(map_t m, const char *key, const char *value);
 const char *map_get(map_t m, const char *key);
-int map_get_int(map_t m, const char *key);
+int         map_get_int(map_t m, const char *key);
 
 #endif
- 
