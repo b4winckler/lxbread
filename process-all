@@ -1,0 +1,14 @@
+#!/bin/bash
+#
+# Read all LXB files in given folder (which is the first and only parameter)
+# and output only the "Region ID" and "Reporter" parameters.  Entries for which
+# either "Region ID" or "Doublet" is zero are dropped.
+#
+# Invoke like this
+#
+#   ./process-all data/ > out.dat
+#
+# This will process all LXB files in the 'data/' folder and save the result in
+# a file called 'out.dat'.
+#
+./lxbread $1*.lxb | tail +2 | awk '$1 != 0 && $3 != 0 {OFS="\t";print $1,$5}'
