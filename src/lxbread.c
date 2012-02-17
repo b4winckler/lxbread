@@ -153,26 +153,28 @@ int check_par_format(map_t txt)
 {
     int npar = map_get_int(txt, "$PAR");
     if (npar > MAX_PAR) {
-        fprintf(stderr, "  Too many parameters: %d\n", npar);
+        fprintf(stderr, "  Unsupported LXB: too many parameters (%d)\n", npar);
         return FALSE;
     }
 
     const char *data_type = map_get(txt, "$DATATYPE");
     if (strcasecmp("I", data_type) != 0) {
-        fprintf(stderr, "  Data is not integral ($DATATYPE=%s)\n", data_type);
+        fprintf(stderr, "  Unsupported LXB: data is not integral "
+                "($DATATYPE=%s)\n", data_type);
         return FALSE;
     }
 
     const char *mode = map_get(txt, "$MODE");
     if (strcasecmp("L", mode) != 0) {
-        fprintf(stderr, "  Data not in list format ($MODE=%s)\n", mode);
+        fprintf(stderr, "  Unsupported LXB: data not in list format "
+                "($MODE=%s)\n", mode);
         return FALSE;
     }
 
     const char *byteord = map_get(txt, "$BYTEORD");
     if (strcmp("1,2,3,4", byteord) != 0) {
-        fprintf(stderr, "  Data not in little endian format ($BYTEORD=%s)\n",
-                byteord);
+        fprintf(stderr, "  Unsupported LXB: data not in little endian format "
+                "($BYTEORD=%s)\n", byteord);
         return FALSE;
     }
 
@@ -182,8 +184,8 @@ int check_par_format(map_t txt)
         const char *key = parameter_key(i, 'B');
         int bits = map_get_int(txt, key);
         if (bits != 32) {
-            fprintf(stderr, "  Parameter %d is not 32 bits (%s=%d)\n",
-                    i, key, bits);
+            fprintf(stderr, "  Unsupported LXB: parameter %d is not 32 bits "
+                    "(%s=%d)\n", i, key, bits);
             return FALSE;
         }
     }
