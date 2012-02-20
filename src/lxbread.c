@@ -3,16 +3,8 @@
 #include <assert.h>
 #include <string.h>
 #include <getopt.h>
+#include <stdbool.h>
 #include "map_lib.h"
-
-
-#ifndef FALSE
-# define FALSE 0
-#endif
-
-#ifndef TRUE
-# define TRUE 1
-#endif
 
 #define MAX_PAR 99
 
@@ -22,10 +14,10 @@ typedef struct {
     int begin_analysis, end_analysis;
 } fcs_header;
 
-static int verbose = TRUE;
+static int verbose = true;
 
 static struct option longopts[] = {
-    { "silent" , no_argument       , &verbose , FALSE } ,
+    { "silent" , no_argument       , &verbose , false } ,
     { "help"   , no_argument       , NULL     , 'h' }   ,
     { NULL     , 0                 , NULL     , 0 }
 };
@@ -95,21 +87,21 @@ int parameter_mask(int n)
     return n >= 0 && n < MAX_PAR ? par_mask[n] : 0;
 }
 
-int parse_header(const char *data, long size, fcs_header *hdr)
+bool parse_header(const char *data, long size, fcs_header *hdr)
 {
-    if (!hdr) return FALSE;
+    if (!hdr) return false;
 
     if (size < 58) {
         fprintf(stderr, "  Bad LXB: header data is too small (%lu)\n", size);
-        return FALSE;
+        return false;
     }
 
     if (0 != strncmp(data, "FCS3.0    ", 10)) {
         fprintf(stderr, "  Bad LXB: magic bytes do not match\n");
-        return FALSE;
+        return false;
     }
 
-    int ok = TRUE;
+    bool ok = true;
     ok &= sscanf(&data[10], "%8d", &hdr->begin_text);
     ok &= sscanf(&data[18], "%8d", &hdr->end_text);
     ok &= sscanf(&data[26], "%8d", &hdr->begin_data);
@@ -148,33 +140,33 @@ map_t parse_text(const char *text, long size)
     return m;
 }
 
-int check_par_format(map_t txt)
+bool check_par_format(map_t txt)
 {
     int npar = map_get_int(txt, "$PAR");
     if (npar > MAX_PAR) {
         fprintf(stderr, "  Unsupported LXB: too many parameters (%d)\n", npar);
-        return FALSE;
+        return false;
     }
 
     const char *data_type = map_get(txt, "$DATATYPE");
     if (strcasecmp("I", data_type) != 0) {
         fprintf(stderr, "  Unsupported LXB: data is not integral "
                 "($DATATYPE=%s)\n", data_type);
-        return FALSE;
+        return false;
     }
 
     const char *mode = map_get(txt, "$MODE");
     if (strcasecmp("L", mode) != 0) {
         fprintf(stderr, "  Unsupported LXB: data not in list format "
                 "($MODE=%s)\n", mode);
-        return FALSE;
+        return false;
     }
 
     const char *byteord = map_get(txt, "$BYTEORD");
     if (strcmp("1,2,3,4", byteord) != 0) {
         fprintf(stderr, "  Unsupported LXB: data not in little endian format "
                 "($BYTEORD=%s)\n", byteord);
-        return FALSE;
+        return false;
     }
 
     init_parameter_mask(txt);
@@ -185,11 +177,11 @@ int check_par_format(map_t txt)
         if (bits != 32) {
             fprintf(stderr, "  Unsupported LXB: parameter %d is not 32 bits "
                     "(%s=%d)\n", i, key, bits);
-            return FALSE;
+            return false;
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 void print_header(map_t txt)
@@ -261,7 +253,7 @@ int main(int argc, char *argv[])
     else if (argc >= 10)  processing_fmt[18] = '2';
     else                  processing_fmt[18] = '1';
 
-    int did_header = FALSE;
+    bool did_header = false;
     for (int i = 0; i < argc; ++i) {
         if (verbose)
             fprintf(stderr, processing_fmt, i+1, argc, argv[i]);
@@ -274,7 +266,7 @@ int main(int argc, char *argv[])
         }
 
         fcs_header hdr;
-        int ok = parse_header(buf, size, &hdr);
+        bool ok = parse_header(buf, size, &hdr);
         if (!ok) {
             free(buf);
             continue;
@@ -297,7 +289,7 @@ int main(int argc, char *argv[])
 
         if (!did_header) {
             print_header(txt);
-            did_header = TRUE;
+            did_header = true;
         }
 
         long data_size = hdr.end_data - hdr.begin_data;
