@@ -51,8 +51,14 @@ map_t map_create()
 
 void map_free(map_t m)
 {
-    if (m)
-        free(m);
+    map_t map = m;
+    while (map) {
+        if (map->name) free(map->name);
+        if (map->value) free(map->value);
+        map_t tofree = map;
+        map = map->nxt;
+        free(tofree);
+    }
 }
 
 void map_set(map_t m, const char *key, const char *value)
