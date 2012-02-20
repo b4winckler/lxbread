@@ -6,7 +6,10 @@
 #include <stdbool.h>
 #include "map_lib.h"
 
-#define MAX_PAR 99
+// Max number of parameters in LXB file that we handle
+#define MAX_PAR       99
+// Max chars needed to print MAX_PAR (must be updated when MAX_PAR is!)
+#define MAX_PAR_CHARS 2
 
 typedef struct {
     int begin_text, end_text;
@@ -61,7 +64,9 @@ char *read_file(const char *filename, long *size)
 
 const char *parameter_key(int n, char type)
 {
-    static char buf[6];  // max 5 chars and null
+    // Key is of format "$PXY", where len(X) <= MAX_PAR_CHARS, and Y == type,
+    // also include room for null terminator.
+    static char buf[MAX_PAR_CHARS+4];
     if (n < 0 || n >= MAX_PAR)
         return "";
 
