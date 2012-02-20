@@ -275,11 +275,15 @@ int main(int argc, char *argv[])
 
         fcs_header hdr;
         int ok = parse_header(buf, size, &hdr);
-        if (!ok) continue;
+        if (!ok) {
+            free(buf);
+            continue;
+        }
 
         long txt_size = hdr.end_text - hdr.begin_text;
         if (!(txt_size > 0 && hdr.begin_text > 0 && hdr.end_text <= size)) {
             fprintf(stderr, "  Bad LXB: could not locate TEXT segment\n");
+            free(buf);
             continue;
         }
 
@@ -287,6 +291,7 @@ int main(int argc, char *argv[])
 
         if (!check_par_format(txt)) {
             map_free(txt);
+            free(buf);
             continue;
         }
 
@@ -299,12 +304,14 @@ int main(int argc, char *argv[])
         if (!(data_size > 0 && hdr.begin_data > 0 && hdr.end_data <= size)) {
             fprintf(stderr, "  Bad LXB: could not locate DATA segment\n");
             map_free(txt);
+            free(buf);
             continue;
         }
 
         print_data((int32_t*)(buf + hdr.begin_data), data_size, txt);
 
         map_free(txt);
+        free(buf);
     }
 
     return did_header ? EXIT_SUCCESS : EXIT_FAILURE;
