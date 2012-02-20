@@ -58,7 +58,6 @@ char *read_file(const char *filename, long *size)
 
     if (actual != filesize) {
         free(buf);
-        fclose(fp);
         return NULL;
     }
 
