@@ -131,6 +131,11 @@ map_t parse_text(const char *text, long size)
 
     char *p = data;
     for (;;) {
+        // FIXME: FCS 3.0 allows the separator character to appear in keys and
+        // values by repeating the separator twice -- this is currently NOT
+        // handled.
+        // For example, if sep='/' then "k//ey/value/" should be parsed as
+        // "k/ey"="value", whereas we parse it as { "k"="", "ey"="value" }.
         char *key = strsep(&p, sep);
         if (!key) break;
         char *val = strsep(&p, sep);
@@ -172,6 +177,14 @@ bool check_par_format(map_t txt)
         fprintf(stderr, "  Unsupported LXB: data not in little endian format "
                 "($BYTEORD=%s)\n", byteord);
         return false;
+    }
+
+    const char *unicode = map_get(txt, "$UNICODE");
+    if (*unicode) {
+        // FIXME: Support Unicode.  We try to parse the data even if the text
+        // segment contains Unicode characters, so don't return false here.
+        fprintf(stderr, "  Unsupported LXB: Unicode flag detected,"
+                " output may be corrupted\n");
     }
 
     init_parameter_mask(txt);
