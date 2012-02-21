@@ -4,9 +4,9 @@ LXB READ
 Description
 -----------
 
-This tool is used to extract the parameter data from LXB files in ASCII format.
-LXB is the format used by Luminex bead arrays and is based on the FCS v3.0
-standard, see `docs/flow-cytometry-v3_0-standard.txt`.
+This tool is used to extract the parameter data from LXB files.  LXB is the
+format used by Luminex bead arrays and is based on the FCS v3.0 standard, see
+`docs/flow-cytometry-v3_0-standard.txt`.
 
 Installation and usage
 ----------------------
