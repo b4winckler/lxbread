@@ -27,6 +27,9 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+// Modifications to the original library (c) 2012 Bjorn Winckler, and released
+// under the same license as above.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
