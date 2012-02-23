@@ -120,14 +120,24 @@ bool parse_header(const char *data, long size, fcs_header *hdr)
     return ok;
 }
 
+char *dup2str(const void *buf, long size)
+{
+    char *str = (char *)malloc(size + 1);
+    if (!str)
+        return NULL;
+
+    str[size] = 0;
+    return memcpy(str, buf, size);
+}
+
 map_t parse_text(const char *text, long size)
 {
     if (size < 2)
         return NULL;
 
     map_t m = map_create();
-    char *sep = strndup(text, 1);
-    char *data = strndup(text+1, size-1);
+    char *sep = dup2str(text, 1);
+    char *data = dup2str(text+1, size-1);
 
     char *p = data;
     for (;;) {
